@@ -32,9 +32,6 @@ enum TOKEN_TYPE {
     TOKEN_OPERATOR_MUL,
     TOKEN_OPERATOR_DIV,
     TOKEN_OPERATOR_GREATER_THAN,
-    TOKEN_OPERATOR_GREATER_THAN_EQUAL,
-    TOKEN_OPERATOR_LESS_THAN,
-    TOKEN_OPERATOR_LESS_THAN_EQUAL,
     TOKEN_OPERATOR_EQUAL,
     TOKEN_OPERATOR_DOUBLE_EQUAL,
     TOKEN_LPARAN,
@@ -69,7 +66,7 @@ void readCode(char *filename) {
     while (fgets(line, MAX, in_file)) {
         for (int i = 0; i < strlen(line); ++i) {
             currentChar = line[i];
-            if (currentChar == '\n') continue;
+            if (currentChar == 10 || currentChar == 13) continue;
             if (currentChar == ' ' && prevChar == ' ') continue;
             programCode[programCodeSize++] = currentChar;
             prevChar = currentChar;
@@ -87,7 +84,7 @@ void readCode(char *filename) {
 */
 
 bool isSpecialChar(char c) {
-    return c == ';' || c == ' ' || c == ',' || c == '+' || c == '-' || c == '*' || c == '/' || c == '>' || c == '<' || c == '=' || c == '(' || c == ')' || c == '{' || c == '}';
+    return c == ';' || c == ' ' || c == ',' || c == '+' || c == '-' || c == '*' || c == '/' || c == '>' || c == '=' || c == '(' || c == ')' || c == '{' || c == '}';
 }
 
 struct nextToken_t {
@@ -153,10 +150,6 @@ void classifyToken() {
                 nextToken.type = TOKEN_OPERATOR_GREATER_THAN;
                 break;
             }
-            case '<': {
-                nextToken.type = TOKEN_OPERATOR_LESS_THAN;
-                break;
-            }
             case '=': {
                 nextToken.type = TOKEN_OPERATOR_EQUAL;
                 break;
@@ -181,10 +174,6 @@ void classifyToken() {
     } else if (nextToken.size == 2) {
         if (!strcmp(nextToken.data, "==")) {
             nextToken.type = TOKEN_OPERATOR_DOUBLE_EQUAL;
-        } else if (!strcmp(nextToken.data, ">=")) {
-            nextToken.type = TOKEN_OPERATOR_GREATER_THAN_EQUAL;
-        } else if (!strcmp(nextToken.data, "<=")) {
-            nextToken.type = TOKEN_OPERATOR_LESS_THAN_EQUAL;
         }
     } else if (nextToken.size == 3) {
         if (!strcmp(nextToken.data, "int")) {
@@ -229,7 +218,7 @@ void getNextToken(bool ignoreWhitespace, bool peek) {
             }
             if (ptr + 1 < programCodeSize) {
                 char nextChar = programCode[ptr + 1];
-                if ((currentChar == '>' || currentChar == '<' || currentChar == '=') && (nextChar == '=')) {
+                if ((currentChar == '=') && (nextChar == '=')) {
                     nextToken.data[tokenSize++] = currentChar;
                     nextToken.data[tokenSize++] = nextChar;
                     ptr += 2;
@@ -373,5 +362,5 @@ int main(int argc, char **argv) {
 
     readCode(argv[1]);
 
-    printf("Grammer is: %s\n", parseProgram() ? "correct" : "incorrect");
+    printf("Grammer is: %s\n", parseProgram() ? "Correct" : "Incorrect");
 }
