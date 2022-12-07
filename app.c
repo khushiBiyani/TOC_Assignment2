@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,8 +65,7 @@ void readCode(char *filename) {
     while (fgets(line, MAX, in_file)) {
         for (int i = 0; i < strlen(line); ++i) {
             currentChar = line[i];
-            if (currentChar == 10 || currentChar == 13) continue;
-            if (currentChar == ' ' && prevChar == ' ') continue;
+            if (currentChar == 10 || currentChar == 13 || (currentChar == ' ' && prevChar == ' ')) continue;
             programCode[programCodeSize++] = currentChar;
             prevChar = currentChar;
         }
@@ -266,7 +264,24 @@ bool readToken(bool ignoreWhitespace, bool peek) {
 */
 
 bool parseDeclaration() {
-    // TODO: Complete with grammer written by Khooshrin
+    if (readToken(true, false) && nextToken.type == TOKEN_INT) {
+        if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
+            while (true) {
+                if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+                    if (readToken(true, false)) {
+                        if (nextToken.type == TOKEN_COMMA)
+                            continue;
+                        else if (nextToken.type == TOKEN_SEMICOLON)
+                            break;
+                        else
+                            return false;
+                    }
+                } else
+                    return false;
+            }
+            return true;
+        }
+    }
     return false;
 }
 
@@ -322,9 +337,6 @@ bool parseAssignment() {
 bool parseStatement() {
     if (readToken(true, true)) {
         switch (nextToken.type) {
-            case TOKEN_INT: {
-                return parseDeclaration();
-            }
             case TOKEN_READ: {
                 return parseRead();
             }
@@ -346,8 +358,23 @@ bool parseStatement() {
     }
 }
 
+bool parseFirstStatement() {
+    if (readToken(true, true)) {
+        switch (nextToken.type) {
+            case TOKEN_INT: {
+                return parseDeclaration();
+            }
+            default: {
+                return parseStatement();
+            }
+        }
+    } else {
+        return false;
+    }
+}
+
 bool parseProgram() {
-    if (!parseStatement()) return false;
+    if (!parseFirstStatement()) return false;
     while (canReadToken()) {
         if (!parseStatement()) return false;
     }
