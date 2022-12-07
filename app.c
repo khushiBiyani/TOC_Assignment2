@@ -276,6 +276,11 @@ bool readToken(bool ignoreWhitespace, bool peek) {
      |___/
 */
 
+bool parseDeclaration() {
+    // TODO: Complete with grammer written by Khooshrin
+    return false;
+}
+
 bool parseRead() {
     if (readToken(true, false) && nextToken.type == TOKEN_READ) {
         if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
@@ -302,23 +307,62 @@ bool parseWrite() {
     return false;
 }
 
-bool parseStatement() {
-    if (readToken(true, true) && nextToken.type == TOKEN_READ) {
-        return parseRead();
-    }
-    if (readToken(true, true) && nextToken.type == TOKEN_WRITE) {
-        return parseWrite();
-    }
-    // TODO: Other 3 types of statements
+bool parseForLoop() {
+    // TODO: Complete with grammer written by Ankesh
     return false;
 }
 
-bool parseProgram() {
-    bool programCorrect = parseStatement();
-    while (canReadToken()) {
-        programCorrect &= parseStatement();
+bool parseExpression() {
+    // TODO: This is some tough function
+    return false;
+}
+
+bool parseAssignment() {
+    if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+        if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
+            if (parseExpression()) {
+                if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                    return true;
+                }
+            }
+        }
     }
-    return programCorrect;
+    return false;
+}
+
+bool parseStatement() {
+    if (readToken(true, true)) {
+        switch (nextToken.type) {
+            case TOKEN_INT: {
+                return parseDeclaration();
+            }
+            case TOKEN_READ: {
+                return parseRead();
+            }
+            case TOKEN_WRITE: {
+                return parseWrite();
+            }
+            case TOKEN_FOR: {
+                return parseForLoop();
+            }
+            case TOKEN_VARIABLE: {
+                return parseAssignment();
+            }
+            default: {
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+}
+
+bool parseProgram() {
+    if (!parseStatement()) return false;
+    while (canReadToken()) {
+        if (!parseStatement()) return false;
+    }
+    return true;
 }
 
 int main(int argc, char **argv) {
@@ -329,5 +373,5 @@ int main(int argc, char **argv) {
 
     readCode(argv[1]);
 
-    printf("Grammer is: %s\n", parseWrite() ? "correct" : "incorrect");
+    printf("Grammer is: %s\n", parseProgram() ? "correct" : "incorrect");
 }
