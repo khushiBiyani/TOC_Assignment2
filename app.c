@@ -276,6 +276,51 @@ bool readToken(bool ignoreWhitespace, bool peek) {
      |___/
 */
 
+bool parseRead() {
+    if (readToken(true, false) && nextToken.type == TOKEN_READ) {
+        if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
+            if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+                if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool parseWrite() {
+    if (readToken(true, false) && nextToken.type == TOKEN_WRITE) {
+        if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
+            if (readToken(true, false) && (nextToken.type == TOKEN_VARIABLE || nextToken.type == TOKEN_INTEGER_LITERAL)) {
+                if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool parseStatement() {
+    if (readToken(true, true) && nextToken.type == TOKEN_READ) {
+        return parseRead();
+    }
+    if (readToken(true, true) && nextToken.type == TOKEN_WRITE) {
+        return parseWrite();
+    }
+    // TODO: Other 3 types of statements
+    return false;
+}
+
+bool parseProgram() {
+    bool programCorrect = parseStatement();
+    while (canReadToken()) {
+        programCorrect &= parseStatement();
+    }
+    return programCorrect;
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Usage: ./simulator <input.txt>\n");
@@ -284,7 +329,5 @@ int main(int argc, char **argv) {
 
     readCode(argv[1]);
 
-    while (readToken(true, false)) {
-        printf("%s {%d}\n", nextToken.data, nextToken.type);
-    }
+    printf("Grammer is: %s\n", parseWrite() ? "correct" : "incorrect");
 }
