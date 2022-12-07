@@ -6,6 +6,18 @@
 
 #define MAX (1000000)
 
+/*
+       _       _           _                 _       _     _
+      | |     | |         | |               (_)     | |   | |
+  __ _| | ___ | |__   __ _| |_   ____ _ _ __ _  __ _| |__ | | ___  ___
+ / _` | |/ _ \| '_ \ / _` | \ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ __|
+| (_| | | (_) | |_) | (_| | |\ V / (_| | |  | | (_| | |_) | |  __/\__ \
+ \__, |_|\___/|_.__/ \__,_|_| \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
+  __/ |
+ |___/
+
+*/
+
 enum TOKEN_TYPE {
     INVALID_TOKEN,
     TOKEN_SEMICOLON,
@@ -20,7 +32,11 @@ enum TOKEN_TYPE {
     TOKEN_OPERATOR_MUL,
     TOKEN_OPERATOR_DIV,
     TOKEN_OPERATOR_GREATER_THAN,
+    TOKEN_OPERATOR_GREATER_THAN_EQUAL,
+    TOKEN_OPERATOR_LESS_THAN,
+    TOKEN_OPERATOR_LESS_THAN_EQUAL,
     TOKEN_OPERATOR_EQUAL,
+    TOKEN_OPERATOR_DOUBLE_EQUAL,
     TOKEN_LPARAN,
     TOKEN_RPARAN,
     TOKEN_LBRACE,
@@ -32,12 +48,24 @@ enum TOKEN_TYPE {
 char programCode[MAX];
 int programCodeSize;
 
+/*
+      _                  _                   _
+     | |                (_)                 | |
+  ___| | ___  __ _ _ __  _ _ __  _ __  _   _| |_
+ / __| |/ _ \/ _` | '_ \| | '_ \| '_ \| | | | __|
+| (__| |  __/ (_| | | | | | | | | |_) | |_| | |_
+ \___|_|\___|\__,_|_| |_|_|_| |_| .__/ \__,_|\__|
+                                | |
+                                |_|
+
+*/
+
 void readCode(char *filename) {
     FILE *in_file = fopen(filename, "r");
 
     char line[MAX];
-    char prevChar = 0;
-    char currentChar = 0;
+    char prevChar = '\0';
+    char currentChar = '\0';
     while (fgets(line, MAX, in_file)) {
         for (int i = 0; i < strlen(line); ++i) {
             currentChar = line[i];
@@ -49,6 +77,19 @@ void readCode(char *filename) {
     }
 }
 
+/*
+ _
+| |
+| | _____  _____ _ __
+| |/ _ \ \/ / _ \ '__|
+| |  __/>  <  __/ |
+|_|\___/_/\_\___|_|
+*/
+
+bool isSpecialChar(char c) {
+    return c == ';' || c == ' ' || c == ',' || c == '+' || c == '-' || c == '*' || c == '/' || c == '>' || c == '<' || c == '=' || c == '(' || c == ')' || c == '{' || c == '}';
+}
+
 struct nextToken_t {
     char data[MAX];
     int size;
@@ -56,10 +97,6 @@ struct nextToken_t {
 };
 
 struct nextToken_t nextToken;
-
-bool isSpecialChar(char c) {
-    return c == ';' || c == ' ' || c == ',' || c == '+' || c == '-' || c == '*' || c == '/' || c == '>' || c == '=' || c == '(' || c == ')' || c == '{' || c == '}';
-}
 
 bool checkNextTokenIsVariable() {
     for (int i = 0; i < nextToken.size; ++i) {
@@ -81,27 +118,8 @@ bool checkNextTokenIsIntegerLiteral() {
     return true;
 }
 
-bool getNextToken(bool ignoreWhitespace) {
-    static int ptr = 0;
-    if (ptr >= programCodeSize) return false;
-
-    int tokenSize = 0;
-    nextToken.type = INVALID_TOKEN;
-    while (ptr < programCodeSize) {
-        char currentChar = programCode[ptr];
-        if (isSpecialChar(currentChar)) {
-            if (!tokenSize) {
-                nextToken.data[tokenSize++] = currentChar;
-                ++ptr;
-            }
-            break;
-        } else {
-            nextToken.data[tokenSize++] = currentChar;
-            ++ptr;
-        }
-    }
-
-    if (tokenSize == 1) {
+void classifyToken() {
+    if (nextToken.size == 1) {
         switch (nextToken.data[0]) {
             case ';': {
                 nextToken.type = TOKEN_SEMICOLON;
@@ -135,6 +153,10 @@ bool getNextToken(bool ignoreWhitespace) {
                 nextToken.type = TOKEN_OPERATOR_GREATER_THAN;
                 break;
             }
+            case '<': {
+                nextToken.type = TOKEN_OPERATOR_LESS_THAN;
+                break;
+            }
             case '=': {
                 nextToken.type = TOKEN_OPERATOR_EQUAL;
                 break;
@@ -156,23 +178,25 @@ bool getNextToken(bool ignoreWhitespace) {
                 break;
             }
         }
-    }
-
-    if (tokenSize == 3) {
+    } else if (nextToken.size == 2) {
+        if (!strcmp(nextToken.data, "==")) {
+            nextToken.type = TOKEN_OPERATOR_DOUBLE_EQUAL;
+        } else if (!strcmp(nextToken.data, ">=")) {
+            nextToken.type = TOKEN_OPERATOR_GREATER_THAN_EQUAL;
+        } else if (!strcmp(nextToken.data, "<=")) {
+            nextToken.type = TOKEN_OPERATOR_LESS_THAN_EQUAL;
+        }
+    } else if (nextToken.size == 3) {
         if (!strcmp(nextToken.data, "int")) {
             nextToken.type = TOKEN_INT;
         } else if (!strcmp(nextToken.data, "for")) {
             nextToken.type = TOKEN_FOR;
         }
-    }
-
-    if (tokenSize == 4) {
+    } else if (nextToken.size == 4) {
         if (!strcmp(nextToken.data, "read")) {
             nextToken.type = TOKEN_READ;
         }
-    }
-
-    if (tokenSize == 5) {
+    } else if (nextToken.size == 5) {
         if (!strcmp(nextToken.data, "write")) {
             nextToken.type = TOKEN_WRITE;
         }
@@ -184,15 +208,68 @@ bool getNextToken(bool ignoreWhitespace) {
             exit(1);
         }
     }
+}
 
-    nextToken.data[tokenSize] = 0;
+int ptr;
+
+bool canReadToken() {
+    return ptr < programCodeSize;
+}
+
+void getNextToken(bool ignoreWhitespace) {
+    int tokenSize = 0;
+    nextToken.type = INVALID_TOKEN;
+
+    while (canReadToken()) {
+        char currentChar = programCode[ptr];
+        if (isSpecialChar(currentChar)) {
+            if (tokenSize > 0) {
+                break;
+            }
+            if (ptr + 1 < programCodeSize) {
+                char nextChar = programCode[ptr + 1];
+                if ((currentChar == '>' || currentChar == '<' || currentChar == '=') && (nextChar == '=')) {
+                    nextToken.data[tokenSize++] = currentChar;
+                    nextToken.data[tokenSize++] = nextChar;
+                    ptr += 2;
+                    break;
+                }
+            }
+            nextToken.data[tokenSize++] = currentChar;
+            ++ptr;
+            break;
+        } else {
+            nextToken.data[tokenSize++] = currentChar;
+            ++ptr;
+        }
+    }
+
+    nextToken.data[tokenSize] = '\0';
     nextToken.size = tokenSize;
 
-    if (ignoreWhitespace && tokenSize == 1 && nextToken.data[0] == ' ')
-        return getNextToken(false);
-    else
-        return true;
+    classifyToken();
+
+    if (ignoreWhitespace && nextToken.type == TOKEN_SPACE) getNextToken(false);
 }
+
+bool readToken(bool ignoreWhitespace) {
+    if (canReadToken()) {
+        getNextToken(ignoreWhitespace);
+        return true;
+    }
+    return false;
+}
+
+/*
+                 _                 _               _
+                | |               | |             | |
+ ___ _   _ _ __ | |_ __ ___  _____| |__   ___  ___| | _____ _ __
+/ __| | | | '_ \| __/ _` \ \/ / __| '_ \ / _ \/ __| |/ / _ \ '__|
+\__ \ |_| | | | | || (_| |>  < (__| | | |  __/ (__|   <  __/ |
+|___/\__, |_| |_|\__\__,_/_/\_\___|_| |_|\___|\___|_|\_\___|_|
+      __/ |
+     |___/
+*/
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -202,7 +279,7 @@ int main(int argc, char **argv) {
 
     readCode(argv[1]);
 
-    while (getNextToken(true)) {
+    while (readToken(true)) {
         printf("%s {%d}\n", nextToken.data, nextToken.type);
     }
 }
