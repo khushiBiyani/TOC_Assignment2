@@ -216,7 +216,8 @@ bool canReadToken() {
     return ptr < programCodeSize;
 }
 
-void getNextToken(bool ignoreWhitespace) {
+void getNextToken(bool ignoreWhitespace, bool peek) {
+    int prevPtr = ptr;
     int tokenSize = 0;
     nextToken.type = INVALID_TOKEN;
 
@@ -249,12 +250,16 @@ void getNextToken(bool ignoreWhitespace) {
 
     classifyToken();
 
-    if (ignoreWhitespace && nextToken.type == TOKEN_SPACE) getNextToken(false);
+    if (ignoreWhitespace && nextToken.type == TOKEN_SPACE) getNextToken(false, peek);
+
+    if (peek) {
+        ptr = prevPtr;
+    }
 }
 
-bool readToken(bool ignoreWhitespace) {
+bool readToken(bool ignoreWhitespace, bool peek) {
     if (canReadToken()) {
-        getNextToken(ignoreWhitespace);
+        getNextToken(ignoreWhitespace, peek);
         return true;
     }
     return false;
@@ -279,7 +284,7 @@ int main(int argc, char **argv) {
 
     readCode(argv[1]);
 
-    while (readToken(true)) {
+    while (readToken(true, false)) {
         printf("%s {%d}\n", nextToken.data, nextToken.type);
     }
 }
