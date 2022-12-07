@@ -337,12 +337,9 @@ bool parseAssignment() {
     return false;
 }
 
-bool parseFirstStatement() {
+bool parseStatement() {
     if (readToken(true, true)) {
         switch (nextToken.type) {
-            case TOKEN_INT: {
-                return parseDeclaration();
-            }
             case TOKEN_READ: {
                 return parseRead();
             }
@@ -364,23 +361,14 @@ bool parseFirstStatement() {
     }
 }
 
-bool parseStatement() {
+bool parseFirstStatement() {
     if (readToken(true, true)) {
         switch (nextToken.type) {
-            case TOKEN_READ: {
-                return parseRead();
-            }
-            case TOKEN_WRITE: {
-                return parseWrite();
-            }
-            case TOKEN_FOR: {
-                return parseForLoop();
-            }
-            case TOKEN_VARIABLE: {
-                return parseAssignment();
+            case TOKEN_INT: {
+                return parseDeclaration();
             }
             default: {
-                return false;
+                return parseStatement();
             }
         }
     } else {
