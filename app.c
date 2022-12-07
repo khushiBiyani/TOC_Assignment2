@@ -265,8 +265,26 @@ bool readToken(bool ignoreWhitespace, bool peek) {
      |___/
 */
 
-bool parseDeclaration() {
-    // TODO: Complete with grammer written by Khooshrin
+bool parseDeclaration(){
+    if (readToken(true, false) && nextToken.type == TOKEN_INT){
+        if (readToken(false, false) && nextToken.type == TOKEN_SPACE){
+            while(true){
+                if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE){
+                    if(readToken(true, false)){
+                        if(nextToken.type == TOKEN_COMMA)
+                            continue;
+                        else if(nextToken.type == TOKEN_SEMICOLON)
+                            break;
+                        else
+                            return false;
+                    }
+                }
+                else
+                    return false;
+            }
+            return true;
+        }
+    }
     return false;
 }
 
@@ -319,7 +337,7 @@ bool parseAssignment() {
     return false;
 }
 
-bool parseStatement() {
+bool parseFirstStatement() {
     if (readToken(true, true)) {
         switch (nextToken.type) {
             case TOKEN_INT: {
@@ -346,8 +364,32 @@ bool parseStatement() {
     }
 }
 
+bool parseStatement() {
+    if (readToken(true, true)) {
+        switch (nextToken.type) {
+            case TOKEN_READ: {
+                return parseRead();
+            }
+            case TOKEN_WRITE: {
+                return parseWrite();
+            }
+            case TOKEN_FOR: {
+                return parseForLoop();
+            }
+            case TOKEN_VARIABLE: {
+                return parseAssignment();
+            }
+            default: {
+                return false;
+            }
+        }
+    } else {
+        return false;
+    }
+}
+
 bool parseProgram() {
-    if (!parseStatement()) return false;
+    if (!parseFirstStatement()) return false;
     while (canReadToken()) {
         if (!parseStatement()) return false;
     }
