@@ -319,15 +319,17 @@ bool parseForLoop() {
                 if (parseExpression) {                                                     // parsing expression m assuming will have ';' handled
                     if (parseAssignmentWithoutSemiColon) {                                 // last assignment as discussed needs a non semicolon expression
                         if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {    // ')'
-                           if(readToken(true,false) && nextToken.type == TOKEN_LBRACE){
-                             if (parseStatement) {                                          // recursive statement calls with ';' handled by the function itself
-                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE) {// Last '}'
+                            if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
+                                bool statements = true;
+                                while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
+                                    statements = parseStatement;
+                                }
+                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {    // Last '}'
                                     if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
                                         return true;
                                     }
                                 }
                             }
-                           }
                         }
                     }
                 }
