@@ -310,45 +310,112 @@ bool parseWrite() {
     }
     return false;
 }
+bool parseExpressionWithoutSemiColon();
 
-bool parseForLoop() {
-    // TODO: Complete with grammer written by Ankesh
-    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {                           // reading 'for'
-        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {                    // '('
-            if (parseAssignment) {                                                         // assignment function handles semicolon so I have not handled semicolon separately
-                if (parseExpression) {                                                     // parsing expression m assuming will have ';' handled
-                    if (parseAssignmentWithoutSemiColon) {                                 // last assignment as discussed needs a non semicolon expression
-                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {    // ')'
-                            if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
-                                bool statements = true;
-                                while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
-                                    statements = parseStatement;
-                                }
-                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {    // Last '}'
-                                    if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                    }
+
+bool parseFactorProd() {
+    if (readToken(true, false)) {
+
+        if (nextToken.type == TOKEN_VARIABLE || nextToken.type == TOKEN_INTEGER_LITERAL) {
+            printf("PP\n");
+            return true;
+        }
+        if (nextToken.type == TOKEN_LPARAN) {
+            if (parseExpressionWithoutSemiColon()) {
+                if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+                    return true;
                 }
             }
         }
     }
     return false;
 }
-
+bool term() {
+    if (parseFactorProd()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                printf("term\n");
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DIV || nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL ) {
+                readToken(true, false);
+                return term();
+            }
+        }
+    }
+    return false;
+}
+bool value() {
+    if (term()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                printf("value\n");
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                readToken(true, false);
+                return value();
+            }
+        }
+    }
+    return false;
+}
+bool relationalExpression() {
+    if (value()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                printf("relational %d\n",nextToken.type);
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                readToken(true, false);
+                return relationalExpression();
+            }
+        }
+    }
+    return false;
+}
 bool parseExpression() {
-    // TODO: This is some tough function
+    if (relationalExpression()) {
+        printf("Relational True\n");
+
+        if (readToken(true, true)) {
+            printf("%d\n",nextToken.type);
+            if (nextToken.type == TOKEN_SEMICOLON ) {
+                printf("expression\n");
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                return parseExpression();
+            }
+        }
+    }
+
+    return false;
+}
+
+bool parseExpressionWithoutSemiColon() {
+     if (relationalExpression()) {
+        if (readToken(true, false)) {
+            if (nextToken.type == TOKEN_RPARAN) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                return parseExpressionWithoutSemiColon();
+            }
+        }
+    }
     return false;
 }
 
 bool parseAssignment() {
     if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+        printf("variable detected\n");
         if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
+            printf("equal\n");
             if (parseExpression()) {
                 if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                    printf("assignment\n");
                     return true;
                 }
             }
@@ -359,8 +426,37 @@ bool parseAssignment() {
 bool parseAssignmentWithoutSemiColon() {
     if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
         if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
-            if (parseExpression()) {
+            if (parseExpressionWithoutSemiColon()) {
                 return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool parseStatement();
+bool parseForLoop() {
+    // TODO: Complete with grammer written by Ankesh
+    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {                           // reading 'for'
+        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {                    // '('
+            if (parseAssignment()) {                                                         // assignment function handles semicolon so I have not handled semicolon separately
+                if (parseExpression()) {                                                     // parsing expression m assuming will have ';' handled
+                    if (parseAssignmentWithoutSemiColon()) {                                 // last assignment as discussed needs a non semicolon expression
+                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {    // ')'
+                            if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
+                                bool statements = true;
+                                while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
+                                    statements = parseStatement();
+                                }
+                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {    // Last '}'
+                                    if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -380,6 +476,7 @@ bool parseStatement() {
                 return parseForLoop();
             }
             case TOKEN_VARIABLE: {
+                printf("assignment calls\n");
                 return parseAssignment();
             }
             default: {
