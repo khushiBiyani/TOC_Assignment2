@@ -313,6 +313,27 @@ bool parseWrite() {
 
 bool parseForLoop() {
     // TODO: Complete with grammer written by Ankesh
+    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {                           // reading 'for'
+        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {                    // '('
+            if (parseAssignment) {                                                         // assignment function handles semicolon so I have not handled semicolon separately
+                if (parseExpression) {                                                     // parsing expression m assuming will have ';' handled
+                    if (parseAssignmentWithoutSemiColon) {                                 // last assignment as discussed needs a non semicolon expression
+                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {    // ')'
+                           if(readToken(true,false) && nextToken.type == TOKEN_LBRACE){
+                             if (parseStatement) {                                          // recursive statement calls with ';' handled by the function itself
+                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE) {// Last '}'
+                                    if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                                        return true;
+                                    }
+                                }
+                            }
+                           }
+                        }
+                    }
+                }
+            }
+        }
+    }
     return false;
 }
 
@@ -328,6 +349,16 @@ bool parseAssignment() {
                 if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
                     return true;
                 }
+            }
+        }
+    }
+    return false;
+}
+bool parseAssignmentWithoutSemiColon() {
+    if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+        if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
+            if (parseExpression()) {
+                return true;
             }
         }
     }
