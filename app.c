@@ -253,6 +253,108 @@ bool readToken(bool ignoreWhitespace, bool peek) {
 }
 
 /*
+     _                            _   _             _        _
+    | |                          | | (_)           | |      | |
+  __| | ___  ___ _ __ _   _ _ __ | |_ _ _ __   __ _| |_ ___ | | _____ _ __
+ / _` |/ _ \/ __| '__| | | | '_ \| __| | '_ \ / _` | __/ _ \| |/ / _ \ '_ \
+| (_| |  __/ (__| |  | |_| | |_) | |_| | | | | (_| | || (_) |   <  __/ | | |
+ \__,_|\___|\___|_|   \__, | .__/ \__|_|_| |_|\__, |\__\___/|_|\_\___|_| |_|
+                       __/ | |                 __/ |
+                      |___/|_|                |___/
+*/
+
+void decryptToken() {
+    int tokenType = nextToken.type;
+    switch (tokenType) {
+        case INVALID_TOKEN: {
+            printf("Invalid token");
+            break;
+        }
+        case TOKEN_SEMICOLON: {
+            printf(";");
+            break;
+        }
+        case TOKEN_COMMA: {
+            printf(",");
+            break;
+        }
+        case TOKEN_SPACE: {
+            printf(" ");
+            break;
+        }
+        case TOKEN_INT: {
+            printf("int");
+            break;
+        }
+        case TOKEN_FOR: {
+            printf("for");
+            break;
+        }
+        case TOKEN_READ: {
+            printf("read");
+            break;
+        }
+        case TOKEN_WRITE: {
+            printf("write");
+            break;
+        }
+        case TOKEN_OPERATOR_ADD: {
+            printf("+");
+            break;
+        }
+        case TOKEN_OPERATOR_SUB: {
+            printf("-");
+            break;
+        }
+        case TOKEN_OPERATOR_MUL: {
+            printf("*");
+            break;
+        }
+        case TOKEN_OPERATOR_DIV: {
+            printf("/");
+            break;
+        }
+        case TOKEN_OPERATOR_GREATER_THAN: {
+            printf(">");
+            break;
+        }
+        case TOKEN_OPERATOR_EQUAL: {
+            printf("=");
+            break;
+        }
+        case TOKEN_OPERATOR_DOUBLE_EQUAL: {
+            printf("==");
+            break;
+        }
+        case TOKEN_LPARAN: {
+            printf("(");
+            break;
+        }
+        case TOKEN_RPARAN: {
+            printf(")");
+            break;
+        }
+        case TOKEN_LBRACE: {
+            printf("{");
+            break;
+        }
+        case TOKEN_RBRACE: {
+            printf("}");
+            break;
+        }
+        case TOKEN_VARIABLE: {
+            printf("Variable");
+            break;
+        }
+        case TOKEN_INTEGER_LITERAL: {
+            printf("Constant");
+            break;
+        }
+    }
+    puts("");
+}
+
+/*
                  _                 _               _
                 | |               | |             | |
  ___ _   _ _ __ | |_ __ ___  _____| |__   ___  ___| | _____ _ __
@@ -310,14 +412,12 @@ bool parseWrite() {
     }
     return false;
 }
+
 bool parseExpressionWithoutSemiColon();
 
-
-bool parseFactorProd() {
+bool parseFactor() {
     if (readToken(true, false)) {
-
         if (nextToken.type == TOKEN_VARIABLE || nextToken.type == TOKEN_INTEGER_LITERAL) {
-            printf("PP\n");
             return true;
         }
         if (nextToken.type == TOKEN_LPARAN) {
@@ -330,14 +430,14 @@ bool parseFactorProd() {
     }
     return false;
 }
+
 bool term() {
-    if (parseFactorProd()) {
+    if (parseFactor()) {
         if (readToken(true, true)) {
             if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                printf("term\n");
                 return true;
             }
-            if (nextToken.type == TOKEN_OPERATOR_DIV || nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL ) {
+            if (nextToken.type == TOKEN_OPERATOR_DIV || nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
                 readToken(true, false);
                 return term();
             }
@@ -345,11 +445,11 @@ bool term() {
     }
     return false;
 }
+
 bool value() {
     if (term()) {
         if (readToken(true, true)) {
             if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                printf("value\n");
                 return true;
             }
             if (nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
@@ -360,11 +460,11 @@ bool value() {
     }
     return false;
 }
+
 bool relationalExpression() {
     if (value()) {
         if (readToken(true, true)) {
             if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                printf("relational %d\n",nextToken.type);
                 return true;
             }
             if (nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
@@ -375,29 +475,11 @@ bool relationalExpression() {
     }
     return false;
 }
+
 bool parseExpression() {
     if (relationalExpression()) {
-        printf("Relational True\n");
-
         if (readToken(true, true)) {
-            printf("%d\n",nextToken.type);
-            if (nextToken.type == TOKEN_SEMICOLON ) {
-                printf("expression\n");
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                return parseExpression();
-            }
-        }
-    }
-
-    return false;
-}
-
-bool parseExpressionWithoutSemiColon() {
-     if (relationalExpression()) {
-        if (readToken(true, false)) {
-            if (nextToken.type == TOKEN_RPARAN) {
+            if (nextToken.type == TOKEN_SEMICOLON) {
                 return true;
             }
             if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
@@ -405,17 +487,15 @@ bool parseExpressionWithoutSemiColon() {
             }
         }
     }
+
     return false;
 }
 
 bool parseAssignment() {
     if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
-        printf("variable detected\n");
         if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
-            printf("equal\n");
             if (parseExpression()) {
                 if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
-                    printf("assignment\n");
                     return true;
                 }
             }
@@ -423,6 +503,7 @@ bool parseAssignment() {
     }
     return false;
 }
+
 bool parseAssignmentWithoutSemiColon() {
     if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
         if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
@@ -435,20 +516,21 @@ bool parseAssignmentWithoutSemiColon() {
 }
 
 bool parseStatement();
+
 bool parseForLoop() {
-    // TODO: Complete with grammer written by Ankesh
-    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {                           // reading 'for'
-        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {                    // '('
-            if (parseAssignment()) {                                                         // assignment function handles semicolon so I have not handled semicolon separately
-                if (parseExpression()) {                                                     // parsing expression m assuming will have ';' handled
-                    if (parseAssignmentWithoutSemiColon()) {                                 // last assignment as discussed needs a non semicolon expression
-                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {    // ')'
+    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {
+        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {
+            if (parseAssignment()) {
+                if (parseExpression()) {
+                    readToken(true, false);
+                    if (parseAssignmentWithoutSemiColon()) {
+                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
                             if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
                                 bool statements = true;
                                 while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
                                     statements = parseStatement();
                                 }
-                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {    // Last '}'
+                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {
                                     if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
                                         return true;
                                     }
@@ -476,7 +558,6 @@ bool parseStatement() {
                 return parseForLoop();
             }
             case TOKEN_VARIABLE: {
-                printf("assignment calls\n");
                 return parseAssignment();
             }
             default: {
