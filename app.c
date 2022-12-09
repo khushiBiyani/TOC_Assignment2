@@ -253,6 +253,108 @@ bool readToken(bool ignoreWhitespace, bool peek) {
 }
 
 /*
+     _                            _   _             _        _
+    | |                          | | (_)           | |      | |
+  __| | ___  ___ _ __ _   _ _ __ | |_ _ _ __   __ _| |_ ___ | | _____ _ __
+ / _` |/ _ \/ __| '__| | | | '_ \| __| | '_ \ / _` | __/ _ \| |/ / _ \ '_ \
+| (_| |  __/ (__| |  | |_| | |_) | |_| | | | | (_| | || (_) |   <  __/ | | |
+ \__,_|\___|\___|_|   \__, | .__/ \__|_|_| |_|\__, |\__\___/|_|\_\___|_| |_|
+                       __/ | |                 __/ |
+                      |___/|_|                |___/
+*/
+
+void decryptToken() {
+    int tokenType = nextToken.type;
+    switch (tokenType) {
+        case INVALID_TOKEN: {
+            printf("Invalid token");
+            break;
+        }
+        case TOKEN_SEMICOLON: {
+            printf(";");
+            break;
+        }
+        case TOKEN_COMMA: {
+            printf(",");
+            break;
+        }
+        case TOKEN_SPACE: {
+            printf(" ");
+            break;
+        }
+        case TOKEN_INT: {
+            printf("int");
+            break;
+        }
+        case TOKEN_FOR: {
+            printf("for");
+            break;
+        }
+        case TOKEN_READ: {
+            printf("read");
+            break;
+        }
+        case TOKEN_WRITE: {
+            printf("write");
+            break;
+        }
+        case TOKEN_OPERATOR_ADD: {
+            printf("+");
+            break;
+        }
+        case TOKEN_OPERATOR_SUB: {
+            printf("-");
+            break;
+        }
+        case TOKEN_OPERATOR_MUL: {
+            printf("*");
+            break;
+        }
+        case TOKEN_OPERATOR_DIV: {
+            printf("/");
+            break;
+        }
+        case TOKEN_OPERATOR_GREATER_THAN: {
+            printf(">");
+            break;
+        }
+        case TOKEN_OPERATOR_EQUAL: {
+            printf("=");
+            break;
+        }
+        case TOKEN_OPERATOR_DOUBLE_EQUAL: {
+            printf("==");
+            break;
+        }
+        case TOKEN_LPARAN: {
+            printf("(");
+            break;
+        }
+        case TOKEN_RPARAN: {
+            printf(")");
+            break;
+        }
+        case TOKEN_LBRACE: {
+            printf("{");
+            break;
+        }
+        case TOKEN_RBRACE: {
+            printf("}");
+            break;
+        }
+        case TOKEN_VARIABLE: {
+            printf("Variable");
+            break;
+        }
+        case TOKEN_INTEGER_LITERAL: {
+            printf("Constant");
+            break;
+        }
+    }
+    puts("");
+}
+
+/*
                  _                 _               _
                 | |               | |             | |
  ___ _   _ _ __ | |_ __ ___  _____| |__   ___  ___| | _____ _ __
@@ -311,13 +413,98 @@ bool parseWrite() {
     return false;
 }
 
-bool parseForLoop() {
-    // TODO: Complete with grammer written by Ankesh
+bool relationalExpression();
+
+bool parseExpressionWithoutSemiColon() {
+    if (relationalExpression()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_RPARAN) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                return parseExpressionWithoutSemiColon();
+            }
+        }
+    }
+
+    return false;
+}
+
+bool parseStatement();
+
+bool parseFactor() {
+    if (readToken(true, false)) {
+        if (nextToken.type == TOKEN_VARIABLE || nextToken.type == TOKEN_INTEGER_LITERAL) {
+            return true;
+        }
+        if (nextToken.type == TOKEN_LPARAN) {
+            if (parseExpressionWithoutSemiColon()) {
+                if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool term() {
+    if (parseFactor()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DIV || nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                readToken(true, false);
+                return term();
+            }
+        }
+    }
+    return false;
+}
+
+bool value() {
+    if (term()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                readToken(true, false);
+                return value();
+            }
+        }
+    }
+    return false;
+}
+
+bool relationalExpression() {
+    if (value()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                readToken(true, false);
+                return relationalExpression();
+            }
+        }
+    }
     return false;
 }
 
 bool parseExpression() {
-    // TODO: This is some tough function
+    if (relationalExpression()) {
+        if (readToken(true, true)) {
+            if (nextToken.type == TOKEN_SEMICOLON) {
+                return true;
+            }
+            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+                return parseExpressionWithoutSemiColon();
+            }
+        }
+    }
+
     return false;
 }
 
@@ -327,6 +514,45 @@ bool parseAssignment() {
             if (parseExpression()) {
                 if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
                     return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool parseAssignmentWithoutSemiColon() {
+    if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+        if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
+            if (parseExpressionWithoutSemiColon()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool parseForLoop() {
+    if (readToken(true, false) && nextToken.type == TOKEN_FOR) {
+        if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {
+            if (parseAssignment()) {
+                if (parseExpression()) {
+                    readToken(true, false);
+                    if (parseAssignmentWithoutSemiColon()) {
+                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+                            if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
+                                bool statements = true;
+                                while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
+                                    statements = parseStatement();
+                                }
+                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {
+                                    if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
