@@ -381,7 +381,7 @@ void bprintf(char *str, ...) {
 }
 
 void bPrintClose() {
-    bprintf(" ]");
+    bprintf("]");
 }
 
 void bprintToken() {
@@ -493,6 +493,47 @@ void variableExists(const char *var) {
     exit(-1);
 }
 
+void simulateCode() {
+    memset(outputBuffer, 0, MAX);
+    outputBufferLength = 0;
+    bprintf("#include <stdio.h>\n#include <stdlib.h>\nint main() {\n");
+    ptr = 0;
+    while (canReadToken()) {
+        readToken(true, false);
+        if (nextToken.type == TOKEN_KEYWORD_INT) {
+            bprintf("%s ", nextToken.data);
+        } else if (nextToken.type == TOKEN_KEYWORD_READ) {
+            readToken(true, false);
+            bprintf("scanf(\"%%d\", &%s)", nextToken.data);
+        } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
+            readToken(true, false);
+            bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
+        } else if (nextToken.type == TOKEN_SEMICOLON) {
+            bprintf(";\n");
+        } else if (nextToken.type == TOKEN_VARIABLE) {
+            variableExists(nextToken.data);
+            bprintf("%s", nextToken.data);
+        } else {
+            bprintf("%s", nextToken.data);
+        }
+    }
+    bprintf("}");
+
+    FILE *fp = fopen("code.c", "w");
+    if (!fp) {
+        printf("Simulator died\n");
+        exit(1);
+    }
+    fputs(outputBuffer, fp);
+    fclose(fp);
+
+    int compileRet = system("gcc -w code.c -o code 2>/dev/null");
+    if (!compileRet) {
+        system("./code");
+    }
+    system("rm ./code ./code.c 2>/dev/null");
+}
+
 /*
                  _                 _               _
                 | |               | |             | |
@@ -505,7 +546,7 @@ void variableExists(const char *var) {
 */
 
 bool parseDeclaration() {
-    bprintf("[D ");
+    bprintf("[D");
     if (readToken(true, false) && nextToken.type == TOKEN_KEYWORD_INT) {
         bprintToken();
         if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
@@ -537,7 +578,7 @@ bool parseDeclaration() {
 }
 
 bool parseRead() {
-    bprintf("[D");
+    bprintf("[R");
     if (readToken(true, false) && nextToken.type == TOKEN_KEYWORD_READ) {
         bprintToken();
         if (readToken(false, false) && nextToken.type == TOKEN_SPACE) {
@@ -840,47 +881,6 @@ bool parseProgram() {
     }
     bPrintClose();
     return true;
-}
-
-void simulateCode() {
-    memset(outputBuffer, 0, MAX);
-    outputBufferLength = 0;
-    bprintf("#include <stdio.h>\n#include <stdlib.h>\nint main() {\n");
-    ptr = 0;
-    while (canReadToken()) {
-        readToken(true, false);
-        if (nextToken.type == TOKEN_KEYWORD_INT) {
-            bprintf("%s ", nextToken.data);
-        } else if (nextToken.type == TOKEN_KEYWORD_READ) {
-            readToken(true, false);
-            bprintf("scanf(\"%%d\", &%s)", nextToken.data);
-        } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
-            readToken(true, false);
-            bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
-        } else if (nextToken.type == TOKEN_SEMICOLON) {
-            bprintf(";\n");
-        } else if (nextToken.type == TOKEN_VARIABLE) {
-            variableExists(nextToken.data);
-            bprintf("%s", nextToken.data);
-        } else {
-            bprintf("%s", nextToken.data);
-        }
-    }
-    bprintf("}");
-
-    FILE *fp = fopen("code.c", "w");
-    if (!fp) {
-        printf("Simulator died\n");
-        exit(1);
-    }
-    fputs(outputBuffer, fp);
-    fclose(fp);
-
-    int compileRet = system("gcc -w code.c -o code 2>/dev/null");
-    if (!compileRet) {
-        system("./code");
-    }
-    system("rm ./code ./code.c 2>/dev/null");
 }
 
 int main(int argc, char **argv) {
