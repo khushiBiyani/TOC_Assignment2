@@ -817,6 +817,29 @@ bool parseProgram() {
     return true;
 }
 
+void simulateCode() {
+    memset(outputBuffer, 0, MAX);
+    outputBufferLength = 0;
+    bprintf("#include <stdio.h>\n#include <stdlib.h>\nint main() {\n");
+    ptr = 0;
+    while (canReadToken()) {
+        readToken(true, false);
+        if (nextToken.type == TOKEN_KEYWORD_INT) {
+            bprintf("%s ", nextToken.data);
+        } else if (nextToken.type == TOKEN_KEYWORD_READ) {
+            // TODO: Replace read with scanf;
+            bprintf("%s ", nextToken.data);
+        } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
+            // TODO: Replace write with printf
+            bprintf("%s ", nextToken.data);
+        } else {
+            bprintf("%s", nextToken.data);
+        }
+    }
+    bprintf("\n}");
+    printf("%s\n", outputBuffer);
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Usage: ./simulator <input.txt>\n");
@@ -826,9 +849,9 @@ int main(int argc, char **argv) {
     readCode(argv[1]);
 
     if (parseProgram()) {
-        printf("%s\n", outputBuffer);
+        // printf("%s\n", outputBuffer);
+        simulateCode();
     } else {
         printf("Grammar is incorrect!\n");
-        printf("%s\n", outputBuffer);
     }
 }
