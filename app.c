@@ -549,27 +549,7 @@ bool parseWrite() {
     return false;
 }
 
-bool relationalExpression();
-
-bool parseExpressionWithoutSemiColon() {
-    bprintf("[EWS");
-    if (relationalExpression()) {
-        if (readToken(true, true)) {
-            if (nextToken.type == TOKEN_RPARAN) {
-                bPrintClose();
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                if (!parseExpressionWithoutSemiColon()) return false;
-                bPrintClose();
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool parseStatement();
+bool parseExpression();
 
 bool parseFactor() {
     bprintf("[F");
@@ -578,76 +558,67 @@ bool parseFactor() {
             bprintToken();
             bPrintClose();
             return true;
-        }
-        if (nextToken.type == TOKEN_LPARAN) {
+        } else if (nextToken.type == TOKEN_LPARAN) {
             bprintToken();
-            if (parseExpressionWithoutSemiColon()) {
-                if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
-                    bprintToken();
-                    bPrintClose();
-                    return true;
-                }
+            if (parseExpression() && readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+                bprintToken();
+                bPrintClose();
+                return true;
             }
         }
     }
     return false;
 }
 
-bool term() {
+bool parseTerm() {
     bprintf("[T");
     if (parseFactor()) {
-        if (readToken(true, true)) {
-            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                bPrintClose();
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_DIV || nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                readToken(true, false);
-                bprintToken();
-                if (!term()) return false;
-                bPrintClose();
-                return true;
-            }
+        readToken(true, true);
+        if (nextToken.type == TOKEN_OPERATOR_MUL || nextToken.type == TOKEN_OPERATOR_DIV) {
+            readToken(true, false);
+            bprintToken();
+            if (!parseTerm()) return false;
+            bPrintClose();
+            return true;
+        } else if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL || nextToken.type == TOKEN_RPARAN) {
+            bPrintClose();
+            return true;
         }
     }
     return false;
 }
 
-bool value() {
+bool parseValue() {
     bprintf("[V");
-    if (term()) {
-        if (readToken(true, true)) {
-            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                bPrintClose();
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                readToken(true, false);
-                bprintToken();
-                if (!value()) return false;
-                bPrintClose();
-                return true;
-            }
+    if (parseTerm()) {
+        readToken(true, true);
+        if (nextToken.type == TOKEN_OPERATOR_ADD || nextToken.type == TOKEN_OPERATOR_SUB) {
+            readToken(true, false);
+            bprintToken();
+            if (!parseValue()) return false;
+            bPrintClose();
+            return true;
+        } else if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL || nextToken.type == TOKEN_RPARAN) {
+            bPrintClose();
+            return true;
         }
     }
     return false;
 }
 
-bool relationalExpression() {
+bool parseRE() {
     bprintf("[RE");
-    if (value()) {
-        if (readToken(true, true)) {
-            if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_RPARAN) {
-                bPrintClose();
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_GREATER_THAN || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                readToken(true, false);
-                bprintToken();
-                if (!relationalExpression()) return false;
-                bPrintClose();
-                return true;
-            }
+    if (parseValue()) {
+        readToken(true, true);
+        if (nextToken.type == TOKEN_OPERATOR_GREATER_THAN) {
+            readToken(true, false);
+            bprintToken();
+            if (!parseRE()) return false;
+            bPrintClose();
+            return true;
+        } else if (nextToken.type == TOKEN_SEMICOLON || nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL || nextToken.type == TOKEN_RPARAN) {
+            bPrintClose();
+            return true;
         }
     }
     return false;
@@ -655,17 +626,36 @@ bool relationalExpression() {
 
 bool parseExpression() {
     bprintf("[E");
-    if (relationalExpression()) {
-        if (readToken(true, true)) {
-            if (nextToken.type == TOKEN_SEMICOLON) {
-                bPrintClose();
-                return true;
-            }
-            if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
-                if (!parseExpressionWithoutSemiColon()) return false;
-                bPrintClose();
-                return true;
-            }
+    if (parseRE()) {
+        readToken(true, true);
+        if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+            readToken(true, false);
+            bprintToken();
+            if (!parseExpression()) return false;
+            bPrintClose();
+            return true;
+        } else if (nextToken.type == TOKEN_SEMICOLON) {
+            bPrintClose();
+            return true;
+        }
+    }
+    return false;
+}
+
+// Parsing expression without a semicolon
+bool parseEWS() {
+    bprintf("[EWS");
+    if (parseRE()) {
+        readToken(true, true);
+        if (nextToken.type == TOKEN_OPERATOR_DOUBLE_EQUAL) {
+            readToken(true, false);
+            bprintToken();
+            if (!parseExpression()) return false;
+            bPrintClose();
+            return true;
+        } else if (nextToken.type == TOKEN_RPARAN) {
+            bPrintClose();
+            return true;
         }
     }
     return false;
@@ -677,25 +667,8 @@ bool parseAssignment() {
         bprintToken();
         if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
             bprintToken();
-            if (parseExpression()) {
-                if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
-                    bprintToken();
-                    bPrintClose();
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-bool parseAssignmentWithoutSemiColon() {
-    bprintf("[AWS");
-    if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
-        bprintToken();
-        if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
-            bprintToken();
-            if (parseExpressionWithoutSemiColon()) {
+            if (parseExpression() && readToken(true, false)) {
+                bprintToken();
                 bPrintClose();
                 return true;
             }
@@ -704,6 +677,24 @@ bool parseAssignmentWithoutSemiColon() {
     return false;
 }
 
+// Parse assignment without semicolon
+bool parseAWS() {
+    bprintf("[AWS");
+    if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
+        bprintToken();
+        if (readToken(true, false) && nextToken.type == TOKEN_OPERATOR_EQUAL) {
+            bprintToken();
+            if (parseEWS() && readToken(true, true)) {
+                bPrintClose();
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool parseStatement();
+
 bool parseForLoop() {
     bprintf("[FOR");
     if (readToken(true, false) && nextToken.type == TOKEN_KEYWORD_FOR) {
@@ -711,26 +702,23 @@ bool parseForLoop() {
         if (readToken(true, false) && nextToken.type == TOKEN_LPARAN) {
             bprintToken();
             if (parseAssignment()) {
-                if (parseExpression()) {
-                    readToken(true, false);
+                if (parseExpression() && readToken(true, false)) {
                     bprintToken();
-                    if (parseAssignmentWithoutSemiColon()) {
-                        if (readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+                    if (parseAWS() && readToken(true, false)) {
+                        bprintToken();
+                        if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
                             bprintToken();
-                            if (readToken(true, false) && nextToken.type == TOKEN_LBRACE) {
+                            while (parseStatement()) {
+                                if (readToken(true, true) && nextToken.type == TOKEN_RBRACE) {
+                                    break;
+                                }
+                            }
+                            readToken(true, false);
+                            bprintToken();
+                            if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
                                 bprintToken();
-                                bool statements = true;
-                                while (readToken(true, true) && nextToken.type != TOKEN_RBRACE && statements) {
-                                    statements = parseStatement();
-                                }
-                                if (readToken(true, false) && nextToken.type == TOKEN_RBRACE && statements) {
-                                    bprintToken();
-                                    if (readToken(true, false) && nextToken.type == TOKEN_SEMICOLON) {
-                                        bprintToken();
-                                        bPrintClose();
-                                        return true;
-                                    }
-                                }
+                                bPrintClose();
+                                return true;
                             }
                         }
                     }
@@ -841,5 +829,6 @@ int main(int argc, char **argv) {
         printf("%s\n", outputBuffer);
     } else {
         printf("Grammar is incorrect!\n");
+        printf("%s\n", outputBuffer);
     }
 }
