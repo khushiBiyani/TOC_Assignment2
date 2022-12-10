@@ -1,6 +1,6 @@
 from nltk.tree import *
 
-text = ""
+text = "[]"
 
 text = text.replace("(", "ob")  # in the syntax tree, 'ob' will display in place of '('
 text = text.replace(")", "cb")  # in the syntax tree, 'cb' will display in place of ')'

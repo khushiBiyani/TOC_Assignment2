@@ -45,6 +45,9 @@ enum TOKEN_TYPE {
 char programCode[MAX];
 int programCodeSize;
 
+char *variables[MAX];
+int variableCount;
+
 /*
       _                  _                   _
      | |                (_)                 | |
@@ -472,6 +475,25 @@ void bprintToken() {
 }
 
 /*
+                 _       _     _                _     _
+                (_)     | |   | |              (_)   | |
+__   ____ _ _ __ _  __ _| |__ | | ___  _____  ___ ___| |_ ___
+\ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ _ \ \/ / / __| __/ __|
+ \ V / (_| | |  | | (_| | |_) | |  __/  __/>  <| \__ \ |_\__ \
+  \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|\___/_/\_\_|___/\__|___/
+*/
+
+void variableExists(const char *var) {
+    for (int i = 0; i < variableCount; ++i) {
+        if (!strcmp(variables[i], var)) {
+            return;
+        }
+    }
+    printf("Variable %s not declared!\n", var);
+    exit(-1);
+}
+
+/*
                  _                 _               _
                 | |               | |             | |
  ___ _   _ _ __ | |_ __ ___  _____| |__   ___  ___| | _____ _ __
@@ -491,6 +513,9 @@ bool parseDeclaration() {
             while (true) {
                 if (readToken(true, false) && nextToken.type == TOKEN_VARIABLE) {
                     bprintToken();
+                    char *tempVar = (char *) malloc(20 * sizeof(char));
+                    strcpy(tempVar, nextToken.data);
+                    variables[variableCount++] = tempVar;
                     if (readToken(true, false)) {
                         if (nextToken.type == TOKEN_COMMA) {
                             bprintToken();
@@ -834,6 +859,9 @@ void simulateCode() {
             bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
         } else if (nextToken.type == TOKEN_SEMICOLON) {
             bprintf(";\n");
+        } else if (nextToken.type == TOKEN_VARIABLE) {
+            variableExists(nextToken.data);
+            bprintf("%s", nextToken.data);
         } else {
             bprintf("%s", nextToken.data);
         }
