@@ -549,7 +549,7 @@ bool parseWrite() {
     return false;
 }
 
-bool parseExpression();
+bool parseEWS();
 
 bool parseFactor() {
     bprintf("[F");
@@ -560,7 +560,7 @@ bool parseFactor() {
             return true;
         } else if (nextToken.type == TOKEN_LPARAN) {
             bprintToken();
-            if (parseExpression() && readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
+            if (parseEWS() && readToken(true, false) && nextToken.type == TOKEN_RPARAN) {
                 bprintToken();
                 bPrintClose();
                 return true;
@@ -827,17 +827,32 @@ void simulateCode() {
         if (nextToken.type == TOKEN_KEYWORD_INT) {
             bprintf("%s ", nextToken.data);
         } else if (nextToken.type == TOKEN_KEYWORD_READ) {
-            // TODO: Replace read with scanf;
-            bprintf("%s ", nextToken.data);
+            readToken(true, false);
+            bprintf("scanf(\"%%d\", &%s)", nextToken.data);
         } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
-            // TODO: Replace write with printf
-            bprintf("%s ", nextToken.data);
+            readToken(true, false);
+            bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
+        } else if (nextToken.type == TOKEN_SEMICOLON) {
+            bprintf(";\n");
         } else {
             bprintf("%s", nextToken.data);
         }
     }
-    bprintf("\n}");
-    printf("%s\n", outputBuffer);
+    bprintf("}");
+
+    FILE *fp = fopen("code.c", "w");
+    if (!fp) {
+        printf("Simulator died\n");
+        exit(1);
+    }
+    fputs(outputBuffer, fp);
+    fclose(fp);
+
+    int compileRet = system("gcc -w code.c -o code 2>/dev/null");
+    if (!compileRet) {
+        system("./code");
+    }
+    system("rm ./code ./code.c 2>/dev/null");
 }
 
 int main(int argc, char **argv) {
@@ -849,7 +864,7 @@ int main(int argc, char **argv) {
     readCode(argv[1]);
 
     if (parseProgram()) {
-        // printf("%s\n", outputBuffer);
+        printf("%s\n", outputBuffer);
         simulateCode();
     } else {
         printf("Grammar is incorrect!\n");
