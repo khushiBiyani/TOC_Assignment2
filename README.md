@@ -45,11 +45,15 @@ $$ VAR = Variable \ token $$
 $$ INT\_LITERAL = Integer \ Constant $$
 $$ SPACE = Space \ Token $$
 
-The regular expression for $VAR$ is: `\b(?!(for|int|read|write)\b)[a-z]+\b`
+The regular expression for $VAR$ is:
+
+$$ VAR = \{a-z\}^{+} $$
 
 We don't have to handle the case of $for$, $int$, $read$ or $write$ explicitly because we are **manually checking** for those while tokenizing.
 
-The regular expression for $INT\_LITERAL$ is: $ \{0-9\}^{+} $
+The regular expression for $INT\_LITERAL$ is:
+
+$$ INT\_LITERAL = \{0-9\}^{+} $$
 
 The set of **Productions** $P$ is:
 
