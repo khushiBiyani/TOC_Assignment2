@@ -504,15 +504,15 @@ void simulateCode() {
             bprintf("%s ", nextToken.data);
         } else if (nextToken.type == TOKEN_KEYWORD_READ) {
             readToken(true, false);
-            bprintf("scanf(\"%%d\", &%s)", nextToken.data);
+            bprintf("scanf(\"%%d\", &%s1)", nextToken.data);
         } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
             readToken(true, false);
-            bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
+            bprintf("printf(\"%%d\\n\", %s1)", nextToken.data);
         } else if (nextToken.type == TOKEN_SEMICOLON) {
             bprintf(";\n");
         } else if (nextToken.type == TOKEN_VARIABLE) {
             variableExists(nextToken.data);
-            bprintf("%s", nextToken.data);
+            bprintf("%s1", nextToken.data);
         } else {
             bprintf("%s", nextToken.data);
         }
@@ -530,8 +530,9 @@ void simulateCode() {
     int compileRet = system("gcc -w code.c -o code 2>/dev/null");
     if (!compileRet) {
         system("./code");
+        system("rm ./code");
     }
-    system("rm ./code ./code.c 2>/dev/null");
+    system("rm ./code.c");
 }
 
 /*
