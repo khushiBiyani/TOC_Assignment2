@@ -15,16 +15,16 @@ Our submission for the second assignment done under the course Theory of Computa
 The **Formal Context Free Grammer** of our language is:
 
 $$ G = (V, T, P, S) $$
-$$ V = \{ P, FS, MS, S, FOR, AWS, A, EWS, E, RE, V, T, F, W, R, D, VL\} $$
+$$ V = \{ PR, FS, MS, SS, FOR, AWS, A, EWS, E, RE, V, T, F, W, R, D, VL\} $$
 $$ T = \{;\} \cup \{,\} \cup \{SPACE\} \cup \{int, for, read, write, +, -, *, /, >, ==,\} \cup \{(\} \cup \{)\} \cup \{\{\} \cup \{\}\} \cup \{VAR, INT\_LITERAL\} $$
-$$ S = P $$
+$$ S = PR $$
 
 The elements of $V$ are correlated with the following real world entities:
 
-$$ P = Program  $$
+$$ PR = Program  $$
 $$ FS = First \ Statement $$
 $$ MS = Many \ Statements $$
-$$ S = Single \ Statement $$
+$$ SS = Single \ Statement $$
 $$ FOR = For \ Statement $$
 $$ AWS = Assignment \ Statement \ Without \ Semicolon $$
 $$ A = Assignment \ Statement \ With \ Semicolon $$
@@ -45,27 +45,25 @@ $$ VAR = Variable \ token $$
 $$ INT\_LITERAL = Integer \ Constant $$
 $$ SPACE = Space \ Token $$
 
-The regular expression for $VAR$ and $INT\_LITERAL$ are:
-
-$$ VAR = \{a-z\}^{+} $$
-
-$$ INT\_LITERAL = \{0-9\}^{+} $$
+The regular expression for $VAR$ is: `\b(?!(for|int|read|write)\b)[a-z]+\b`
 
 We don't have to handle the case of $for$, $int$, $read$ or $write$ explicitly because we are **manually checking** for those while tokenizing.
 
+The regular expression for $INT\_LITERAL$ is: $\{0-9\}^{+}$
+
 The set of **Productions** $P$ is:
 
-$$ P \rightarrow FS \ | \ FS \ MS $$
-$$ MS \rightarrow S \ | \ S \ MS $$
+$$ PR \rightarrow FS \ | \ FS \ MS $$
+$$ MS \rightarrow SS \ | \ SS \ MS $$
 $$ FS \rightarrow D \ | \ R \ | \ W \ | \ FOR \ | \ A $$
-$$ S \rightarrow R \ | \ W \ | \ FOR \ | \ A $$
+$$ SS \rightarrow R \ | \ W \ | \ FOR \ | \ A $$
 $$ FOR \rightarrow for \ ( A \ E \ AWS \ ) \ \{MS\} \ ;$$
 $$ W \rightarrow write \ SPACE \ VAR \ ; \ | \ write \ SPACE \ INT\_LITERAL \ ;$$
 $$ R \rightarrow read \ SPACE \ VAR \ ; $$
 $$ D \rightarrow int \ SPACE \ VL \ ;$$
 $$ VL \rightarrow VAR \ | \ VAR \ , \ VL$$
 $$ AWS \rightarrow VAR \ = \ EWS $$
-$$ A \rightarrow VAR \ = \ E$$
+$$ A \rightarrow AWS; $$
 $$ EWS \rightarrow RE \ | \ RE == EWS $$
 $$ RE \rightarrow V \ | \ V > RE $$
 $$ V \rightarrow T \ | \ T + V \ | \ T - V $$
