@@ -1,25 +1,26 @@
 # TOC Assignment 2
 
-Our submission for the second assignment done under the course Theory of Computation @ BITS Pilani, Hyderabad Campus
+Our submission for the second assignment done under the course **Theory of Computation** @ *BITS Pilani, Hyderabad Campus*
 
 ## Group Members
 
-- Ankesh Pandey: 2020A7PS0104H
-- Khooshrin Aspi Pithawalla: 2020A7PS2067H
-- Khushi Biyani: 2020A7PS0194H
-- Kavyanjali Agnihotri: 2020A7PS0185H
-- Tushar Brijesh Chenan: 2020A7PS0253H
+- **Ankesh Pandey**: $2020A7PS0104H$
+- **Khooshrin Aspi Pithawalla**: $2020A7PS2067H$
+- **Khushi Biyani**: $2020A7PS0194H$
+- **Kavyanjali Agnihotri**: $2020A7PS0185H$
+- **Tushar Brijesh Chenan**: $2020A7PS0253H$
 
-## Grammer Of Basic C
+## Grammar Of Basic C
 
-The **Formal Context Free Grammer** of our language is:
+The **Formal Context Free Grammar** of our language is:
 
-$$ G = (V, T, P, S) $$
+$$ G = \{V, T, P, S\} $$
 $$ V = \{ PR, FS, MS, SS, FOR, AWS, A, EWS, E, RE, V, T, F, W, R, D, VL\} $$
-$$ T = \{;\} \cup \{,\} \cup \{SPACE\} \cup \{int, for, read, write, +, -, *, /, >, ==,\} \cup \{(\} \cup \{)\} \cup \{\{\} \cup \{\}\} \cup \{VAR, INT\_LITERAL\} $$
+$$ T = \{;\} \cup \{,\} \cup \{SPACE\} \cup \{int, for, read, write, +, -, *, /, >, ==\} \\ \cup \{(\} \cup \{)\} \cup \{\{\} \cup \{\}\} \cup \{VAR, INT\_LITERAL\} $$
 $$ S = PR $$
+$$ P = \{ \cdots \ written \ below \} $$
 
-The elements of $V$ are correlated with the following real world entities:
+The elements of set $V$ (Non Terminals) are correlated with the following real world entities:
 
 $$ PR = Program  $$
 $$ FS = First \ Statement $$
@@ -39,7 +40,7 @@ $$ R = Read \ Statement $$
 $$ D = Declaration \ Statement $$
 $$ VL = Variable \ List $$
 
-The elements of $T$ are correlated with the following real world entities:
+The elements of set $T$ (Terminals) are correlated with the following real world entities:
 
 $$ VAR = Variable \ token $$
 $$ INT\_LITERAL = Integer \ Constant $$
