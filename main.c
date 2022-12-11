@@ -507,7 +507,10 @@ void simulateCode() {
             bprintf("scanf(\"%%d\", &%s1)", nextToken.data);
         } else if (nextToken.type == TOKEN_KEYWORD_WRITE) {
             readToken(true, false);
-            bprintf("printf(\"%%d\\n\", %s1)", nextToken.data);
+            if (nextToken.type == TOKEN_VARIABLE)
+                bprintf("printf(\"%%d\\n\", %s1)", nextToken.data);
+            else
+                bprintf("printf(\"%%d\\n\", %s)", nextToken.data);
         } else if (nextToken.type == TOKEN_SEMICOLON) {
             bprintf(";\n");
         } else if (nextToken.type == TOKEN_VARIABLE) {
@@ -519,7 +522,7 @@ void simulateCode() {
     }
     bprintf("}");
 
-    FILE *fp = fopen("code.c", "w");
+    FILE *fp = fopen(".code.c", "w");
     if (!fp) {
         printf("Simulator died\n");
         exit(1);
@@ -527,12 +530,12 @@ void simulateCode() {
     fputs(outputBuffer, fp);
     fclose(fp);
 
-    int compileRet = system("gcc -w code.c -o code 2>/dev/null");
+    int compileRet = system("gcc -w .code.c -o .code 2>/dev/null");
     if (!compileRet) {
-        system("./code");
-        system("rm ./code");
+        system("./.code");
+        system("rm ./.code");
     }
-    system("rm ./code.c");
+    system("rm ./.code.c");
 }
 
 /*
